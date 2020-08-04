@@ -1,10 +1,14 @@
 <template>
+
   <div v-if="ready"> # this tells the page to not render until the page is ready
       # access objects directly with {{ myStuff.heading }} is the JS equivalent of {{ myStuff['heading'] }}
-
     <h2 class="some-heading">Hello and welcome to {{ myStuff.heading }}</h2>
-    Here is how to do a list
-    # if myStuff is a list, you can do a list rendering like so
+    <div class="calendar">
+      <div class="month-indicator"></div>
+      <div class="day-of-week"></div>
+      <div class="date-grid"></div>
+    </div>
+
     <ul>
       <li v-for="item in myStuff" :key="item">
         My item name is: {{item}}
