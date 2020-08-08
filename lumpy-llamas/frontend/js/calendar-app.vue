@@ -3,12 +3,18 @@
   <div v-if="ready"> # this tells the page to not render until the page is ready
       # access objects directly with {{ myStuff.heading }} is the JS equivalent of {{ myStuff['heading'] }}
     <h2 class="some-heading">Hello and welcome to {{ myStuff.heading }}</h2>
-    <div class="calendar">
-      <div class="month-indicator"></div>
-      <div class="day-of-week"></div>
-      <div class="date-grid"></div>
+    <main id="calendar">
+      <div>S</div>
+      <div>M</div>
+      <div>T</div>
+      <div>W</div>
+      <div>T</div>
+      <div>F</div>
+      <div>S</div> 
+      <div v-for="(day, index) in days" :style="{ gridColumn: column(index) }" :class="{ today: today(day) }">
+        {{ day.format('D') }}
     </div>
-
+    </main>
     <ul>
       <li v-for="item in myStuff" :key="item">
         My item name is: {{item}}
@@ -49,4 +55,28 @@ export default {
     },
   },
 };
+
+const app = new Vue({
+  el: '#calendar',
+  data() {
+    return {
+      days: []  
+    };
+  }, 
+  methods: {
+    column(index) {
+      if (index == 0) {
+        return this.days[0].day() + 1
+      };
+    },
+    today(day) {
+      return moment().isSame(day, 'day')
+    },
+  },
+  mounted() {
+    let monthDate = moment().startOf('month')
+    
+    this.days = [...Array(monthDate.daysInMonth())].map((_, i) => monthDate.clone().add(i, 'day'))
+  },
+});
 </script>
