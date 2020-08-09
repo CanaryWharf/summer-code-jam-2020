@@ -4,37 +4,37 @@ import logging
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.db import transaction
-from chat.models import ChatRoom, ChatMessage, User, _model_field_limits
+from chat.models import ChatRoom, ChatMessage, ChatRoomUser, User, _model_field_limits
 
 
 logger = logging.getLogger(__name__)
 
 
-class UserNotFound(Exception):
+class UserNotPermitted(Exception):
     pass
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
     @sync_to_async
-    def create_or_get_group(self):
-        chat_room, created = ChatRoom.objects.get_or_create(name=self.room_name)
-        if created:
-            logger.info(f'Created new chat_room "{self.room_name}"')
-        return chat_room.pk
+    def set_user_and_room_ids(self):
+        chat_room = ChatRoom.objects.get(name=self.room_name)
+        self.room_id = chat_room.pk
 
-    @sync_to_async
-    def get_user(self):
-        user, created = User.objects.get_or_create(username=self.user.username)
-        if created:
-            logger.warning(f'New user "{self.user.username}" created during connection to room "{self.room_name}"')
-        return user.pk
+        user = User.objects.get(username=self.user.username)
+        self.user_id = user.pk
+
+        if chat_room.is_private:
+            permitted = ChatRoomUser.objects.filter(
+                    chat_room_id=self.room_id, user_id=self.user_id
+                ).exists()
+            if not permitted:
+                raise UserNotPermitted(f'User {user.username} is not permitted to enter ChatRoom {chat_room.name}')
 
     async def connect(self):
         self.user = self.scope["user"]
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'chat_%s' % self.room_name
-        self.room_id = self.create_or_get_group()
-        self.user_id = self.get_user()
+        self.set_user_and_room_ids()
 
         # Join room group
         await self.channel_layer.group_add(

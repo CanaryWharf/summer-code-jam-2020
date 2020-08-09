@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.constraints import UniqueConstraint
 from django.contrib.auth.models import User
 # Create your models here.
 
@@ -13,6 +14,13 @@ _model_field_limits = {
 
 class ChatRoom(models.Model):
     name = models.CharField(max_length=_model_field_limits['ChatRoom__name__max_length'])
+    is_private = models.BooleanField(default=False)
+    UniqueConstraint(fields=['name'], name='unique_chat_room_name')
+
+
+class ChatRoomUser(models.Model):
+    chat_room_id = models.ForeignKey(ChatRoom, null=True, on_delete=models.SET_NULL)
+    user_id = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
 
 
 class ChatMessage(models.Model):
